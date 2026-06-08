@@ -1,6 +1,4 @@
-# dsc190_finalproject
-
-# <Project Name>
+# Terminal to Inbox
 
 <A short description of the tool and what problem it solves. Two or three
 sentences should be enough.>

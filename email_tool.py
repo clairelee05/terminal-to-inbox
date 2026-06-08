@@ -2,11 +2,16 @@ import argparse
 import os
 import smtplib
 from email.message import EmailMessage
+import tempfile
+from email.mime.image import MIMEImage
+import matplotlib.pyplot as plt
+from calendar_content import add_calendar_content, get_calendar_html
 
 from dotenv import load_dotenv
 
 from config import load_config, save_config
 from duedate_content import add_duedate_content, get_duedate_html
+from news_content import add_news_content, get_news_html
 from weather_content import add_weather, get_weather_html
 from news_content import get_news_html
 
@@ -24,20 +29,28 @@ def list_content():
     print("Email content:")
 
     for index, item in enumerate(content, start=1):
-        if item["type"] == "weather":
+        content_type = item.get("type")
+
+        if content_type == "weather":
             print(
-                f"{index}. Weather ({item['location_name']})"
+                f"{index}. Weather: {item.get('location_name', 'Unknown Location')} "
+                f"({item.get('latitude')}, {item.get('longitude')})"
             )
 
-        elif item["type"] == "duedate":
+        elif content_type == "duedate":
             print(
-                f"{index}. {item['title']}"
+                f"{index}. Due Date: {item.get('title', 'Assignments')}"
             )
 
-        elif item["type"] == "news":
+        elif content_type == "news":
             print(
-                f"{index}. {item['title']} "
+                f"{index}. News: {item.get('title', 'News')} "
                 f"({item.get('category', 'general')})"
+            )
+
+        elif content_type == "calendar":
+            print(
+                f"{index}. Calendar: {item.get('title', 'Calendar')}"
             )
 
         else:
@@ -58,8 +71,8 @@ def delete_content(index):
 
     if removed["type"] == "weather":
         print(f"Deleted weather content for {removed['location_name']}")
-    elif removed["type"] == "duedate":
-        print(f"Deleted due date content: {removed['title']}")
+    elif removed["type"] == "calendar":
+        print(f"Deleted calendar content: {removed['title']}")
     else:
         print("Deleted content")
 
@@ -71,8 +84,12 @@ def build_email_html():
     for item in config.get("content", []):
         if item["type"] == "weather":
             sections.append(get_weather_html(item))
+        elif item["type"] == "calendar":
+            sections.append(get_calendar_html(item))
         elif item["type"] == "duedate":
             sections.append(get_duedate_html(item))
+        elif item["type"] == "news":
+            sections.append(get_news_html(item))
 
         elif item["type"] == "duedate":
             sections.append(get_duedate_html(item))
@@ -134,7 +151,9 @@ def main():
 
     subparsers.add_parser("send")
     subparsers.add_parser("content")
-    subparsers.add_parser("add-duedates")
+    subparsers.add_parser("add-calendar")
+    subparsers.add_parser("add-duedate")
+    subparsers.add_parser("add-news")
 
     delete_parser = subparsers.add_parser("delete-content")
     delete_parser.add_argument("index", type=int)
@@ -156,14 +175,20 @@ def main():
         delete_content(args.index)
 
     elif args.command == "add-weather":
+        add_weather(args.lat, args.lon, args.name)
+    elif args.command == "add-calendar":
         config = load_config()
-        message = add_weather(config, args.lat, args.lon, args.name)
+        message = add_calendar_content(config)
         save_config(config)
         print(message)
-
-    elif args.command == "add-duedates":
+    elif args.command == "add-duedate":
         config = load_config()
         message = add_duedate_content(config)
+        save_config(config)
+        print(message)
+    elif args.command == "add-news":
+        config = load_config()
+        message = add_news_content(config)
         save_config(config)
         print(message)
 

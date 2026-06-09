@@ -1,5 +1,5 @@
 import requests
-
+from datetime import datetime
 
 def get_current_location():
     response = requests.get("https://ipapi.co/json/")
@@ -76,7 +76,12 @@ def get_weather_html(item):
         "latitude": item["latitude"],
         "longitude": item["longitude"],
         "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code",
-        "daily": "temperature_2m_max,temperature_2m_min",
+        "daily": (
+            "temperature_2m_max,"
+            "temperature_2m_min,"
+            "sunrise,"
+            "sunset"
+        ),
         "temperature_unit": "fahrenheit",
         "wind_speed_unit": "mph",
         "forecast_days": 1,
@@ -96,6 +101,9 @@ def get_weather_html(item):
     weather_emoji = get_weather_emoji(weather_code)
     high_temp = daily["temperature_2m_max"][0]
     low_temp = daily["temperature_2m_min"][0]
+    sunrise = datetime.fromisoformat(daily["sunrise"][0]).strftime("%-I:%M %p")
+    sunset = datetime.fromisoformat(daily["sunset"][0]).strftime("%-I:%M %p")
+
 
     return f"""
     <div style="border:1px solid #ddd; border-radius:12px; padding:18px; margin-bottom:20px; font-family:Arial, sans-serif;">
@@ -119,6 +127,18 @@ def get_weather_html(item):
             <tr>
                 <td style="padding-right:20px;"><strong>Wind Speed</strong></td>
                 <td>{wind_speed} mph</td>
+            </tr>
+            <tr>
+                <td style="padding-right:20px;">
+                    <strong>Sunrise🌅</strong>
+                </td>
+                <td>{sunrise}</td>
+            </tr>
+            <tr>
+                <td style="padding-right:20px;">
+                    <strong>Sunset🌇</strong>
+                </td>
+                <td>{sunset}</td>
             </tr>
         </table>
     </div>

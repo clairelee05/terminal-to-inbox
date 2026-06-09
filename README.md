@@ -1,7 +1,9 @@
 # Terminal to Inbox
 
-<A short description of the tool and what problem it solves. Two or three
-sentences should be enough.>
+Terminal to Inbox is a lightweight command-line tool that gathers information from multiple sources, such as calendars, to-do lists, weather, news, and due dates, and delivers a concise daily digest directly to your email inbox. It helps you stay organized by bringing important updates into a single, easy-to-read summary.
+
+The tool can also generate an AI-powered overview that highlights key events, tasks, and priorities for the day, allowing you to quickly understand what needs your attention without checking multiple applications.
+
 
 ## Usage
 

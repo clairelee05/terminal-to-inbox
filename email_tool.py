@@ -13,6 +13,7 @@ from config import load_config, save_config
 from duedate_content import add_duedate_content, get_duedate_html
 from news_content import add_news_content, get_news_html
 from weather_content import add_weather, get_weather_html
+from todo_content import add_todo_content, get_todo_html
 
 load_dotenv()
 
@@ -51,6 +52,8 @@ def list_content():
             print(
                 f"{index}. Calendar: {item.get('title', 'Calendar')}"
             )
+        elif content_type == "todo":
+            print(f"{index}. To Do: {item.get('title', 'To Do')}")
 
         else:
             print(f"{index}. Unknown content type: {item}")
@@ -89,6 +92,8 @@ def build_email_html():
             sections.append(get_duedate_html(item))
         elif item["type"] == "news":
             sections.append(get_news_html(item))
+        elif item["type"] == "todo":
+            sections.append(get_todo_html(item))
 
     content_html = "\n".join(sections)
 
@@ -147,6 +152,7 @@ def main():
     subparsers.add_parser("add-calendar")
     subparsers.add_parser("add-duedate")
     subparsers.add_parser("add-news")
+    subparsers.add_parser("add-todo")
 
     delete_parser = subparsers.add_parser("delete-content")
     delete_parser.add_argument("index", type=int)
@@ -182,6 +188,11 @@ def main():
     elif args.command == "add-news":
         config = load_config()
         message = add_news_content(config)
+        save_config(config)
+        print(message)
+    elif args.command == "add-todo":
+        config = load_config()
+        message = add_todo_content(config)
         save_config(config)
         print(message)
 

@@ -62,13 +62,13 @@ def format_assignment_line(assignment):
 
 def fetch_notion_due_dates():
     token = os.getenv("NOTION_TOKEN")
-    database_id = os.getenv("NOTION_DATABASE_ID")
+    database_id = os.getenv("NOTION_DUEDATE_DATABASE_ID")
 
     if not token:
         raise ValueError("Missing NOTION_TOKEN in .env")
 
     if not database_id:
-        raise ValueError("Missing NOTION_DATABASE_ID in .env")
+        raise ValueError("Missing NOTION_DUEDATE_DATABASE_ID in .env")
 
     today = date.today()
     sunday = get_sunday_of_current_week(today)

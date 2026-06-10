@@ -1,5 +1,7 @@
+import html
 import os
 import re
+
 import requests
 
 
@@ -15,10 +17,18 @@ def add_summary_content(config):
     return "Added AI Summary content."
 
 
-def html_to_text(html):
-    text = html.replace("<br>", "\n").replace("<br/>", "\n").replace("<br />", "\n")
+def html_to_text(raw_html):
+    text = raw_html or ""
+
+    text = text.replace("<br>", "\n").replace("<br/>", "\n").replace("<br />", "\n")
+    text = re.sub(r"</p\s*>", "\n", text, flags=re.IGNORECASE)
+    text = re.sub(r"</li\s*>", "\n", text, flags=re.IGNORECASE)
     text = re.sub(r"<[^>]+>", "", text)
-    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
+
+    text = html.unescape(text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n\s*\n+", "\n", text)
+
     return text.strip()
 
 
@@ -27,11 +37,10 @@ def build_summary_context(section_html_parts):
 
     for section in section_html_parts:
         title = section.get("title") or section.get("type") or "Untitled Section"
-        html = section.get("html", "")
-        text = html_to_text(html)
+        section_text = html_to_text(section.get("html", ""))
 
-        if text:
-            context.append(f"{title}:\n{text}")
+        if section_text:
+            context.append(f"{title}:\n{section_text}")
 
     return "\n\n".join(context)
 
@@ -43,22 +52,59 @@ def build_prompt(section_html_parts):
         context = "No digest section details were provided."
 
     return f"""
-You are writing a concise daily email summary based only on the digest content below.
+You are writing a concise daily email summary based only on the actual email content below.
 
-Digest content:
+Email content to summarize:
 {context}
 
-Write:
-- 1 short overview sentence
-- 2 to 4 bullet points based on the real content
-- 1 clear top priority
+Format exactly like this, with no extra blank lines:
+
+Overview:
+<one concise sentence>
+Today's Highlights:
+• <specific highlight from the email content>
+• <specific highlight from the email content>
+• <specific highlight from the email content>
+Top Priority:
+<one concise priority based on the email content>
 
 Rules:
-- Do not invent meetings, tasks, deadlines, or events.
-- If calendar or todo details are missing, say they were not provided.
-- Prefer specific times, names, and due items when present.
-- Keep it practical and concise.
+- Summarize only the provided email content.
+- Do not invent meetings, assignments, tasks, weather, or deadlines.
+- Do not use markdown syntax such as *, **, #, or -.
+- Use the bullet character • for highlights.
+- Use 2 to 5 highlights.
+- Prefer specific times, dates, task names, due dates, and event names when available.
+- Keep each highlight to one sentence.
+- Do not add blank lines between a heading and its content.
+- Add exactly one blank line between sections.
 """.strip()
+
+
+def normalize_summary_text(summary):
+    summary = (summary or "").strip()
+
+    summary = summary.replace("\r\n", "\n").replace("\r", "\n")
+    summary = re.sub(r"[*#`_]+", "", summary)
+
+    summary = re.sub(r"(?im)^\s*overview\s*:?\s*$", "Overview:", summary)
+    summary = re.sub(
+        r"(?im)^\s*(today'?s highlights|highlights)\s*:?\s*$",
+        "Today's Highlights:",
+        summary,
+    )
+    summary = re.sub(r"(?im)^\s*top priority\s*:?\s*$", "Top Priority:", summary)
+
+    summary = re.sub(r"\n\s*\n+", "\n", summary)
+
+    summary = re.sub(r"Overview:\s*\n+", "Overview:\n", summary)
+    summary = re.sub(r"Today's Highlights:\s*\n+", "Today's Highlights:\n", summary)
+    summary = re.sub(r"Top Priority:\s*\n+", "Top Priority:\n", summary)
+
+    summary = re.sub(r"\n(?=Today's Highlights:)", "\n\n", summary)
+    summary = re.sub(r"\n(?=Top Priority:)", "\n\n", summary)
+
+    return summary.strip()
 
 
 def generate_summary(config, section_html_parts):
@@ -187,7 +233,16 @@ def generate_openai_summary(section_html_parts):
 
 def generate_local_summary(section_html_parts):
     if not section_html_parts:
-        return "No digest sections are currently enabled."
+        return """
+Overview:
+No digest sections are currently enabled.
+
+Today's Highlights:
+• Add calendar, todo, due date, weather, or news content before sending the email.
+
+Top Priority:
+Configure at least one content section.
+""".strip()
 
     titles = [
         section.get("title") or section.get("type") or "Untitled Section"
@@ -195,27 +250,77 @@ def generate_local_summary(section_html_parts):
     ]
 
     return f"""
+Overview:
 Today’s digest includes {len(titles)} sections: {", ".join(titles)}.
 
-- Review the calendar and task sections for time-sensitive items.
-- Check weather and news for useful context.
-- Focus first on anything due today or scheduled earliest.
+Today's Highlights:
+• Review calendar and task sections for time-sensitive items.
+• Check weather and news for useful context.
+• Focus first on anything due today or scheduled earliest.
 
-Top priority: Review today’s calendar and due items before lower-priority updates.
+Top Priority:
+Review today’s calendar and due items before lower-priority updates.
 """.strip()
+
+
+def summary_text_to_html(summary):
+    summary = normalize_summary_text(summary)
+    lines = summary.splitlines()
+
+    html_parts = []
+    previous_was_heading = False
+
+    for line in lines:
+        line = line.strip()
+
+        if not line:
+            continue
+
+        escaped_line = html.escape(line)
+
+        if line in {"Overview:", "Today's Highlights:", "Top Priority:"}:
+            if html_parts:
+                html_parts.append("<div style='height:10px;'></div>")
+
+            html_parts.append(
+                f"<div style='font-weight:700; margin-bottom:4px;'>{escaped_line[:-1]}</div>"
+            )
+            previous_was_heading = True
+            continue
+
+        if line.startswith("•"):
+            html_parts.append(
+                f"<div style='margin-left:10px; margin-bottom:3px;'>{escaped_line}</div>"
+            )
+        else:
+            margin_bottom = "2px" if previous_was_heading else "4px"
+            html_parts.append(
+                f"<div style='margin-bottom:{margin_bottom};'>{escaped_line}</div>"
+            )
+
+        previous_was_heading = False
+
+    return "\n".join(html_parts)
 
 
 def get_summary_html(item, config, section_html_parts):
     summary = generate_summary(config, section_html_parts)
-    summary_html = summary.replace("\n", "<br>")
+    summary_html = summary_text_to_html(summary)
 
     return f"""
-    <div style="border:1px solid #ddd; border-radius:12px; padding:18px; margin-bottom:20px; font-family:Arial, sans-serif; background:#f6f8fa;">
-        <h2 style="margin-top:0; margin-bottom:12px; font-size:18px;">
+    <div style="
+        border:1px solid #ddd;
+        border-radius:12px;
+        padding:16px 18px;
+        margin-bottom:20px;
+        font-family:Arial,sans-serif;
+        background:#f8fafc;
+    ">
+        <h2 style="margin:0 0 12px 0; font-size:18px;">
             🤖 {item.get("title", "Today at a Glance")}
         </h2>
 
-        <div style="font-size:13px; line-height:1.5;">
+        <div style="font-size:14px; line-height:1.45;">
             {summary_html}
         </div>
     </div>

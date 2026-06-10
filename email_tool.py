@@ -5,7 +5,6 @@ from email.message import EmailMessage
 import tempfile
 from email.mime.image import MIMEImage
 import matplotlib.pyplot as plt
-from calendar_content import add_calendar_content, get_calendar_html
 
 from dotenv import load_dotenv
 
@@ -15,9 +14,9 @@ from news_content import add_news_content, get_news_html
 from weather_content import add_weather, get_weather_html
 from todo_content import add_todo_content, get_todo_html
 from summary_content import add_summary_content, get_summary_html
+from calendar_content import add_calendar_content, get_calendar_html
 
 load_dotenv()
-
 
 def list_content():
     config = load_config()
@@ -39,22 +38,22 @@ def list_content():
             )
 
         elif content_type == "duedate":
-            print(
-                f"{index}. Due Date: {item.get('title', 'Assignments')}"
-            )
+            source = item.get("source", "Notion")
+            print(f"{index}. Due Date: {source}")
 
         elif content_type == "news":
-            print(
-                f"{index}. News: {item.get('title', 'News')} "
-                f"({item.get('category', 'general')})"
-            )
+            category = item.get("category", "general")
+            print(f"{index}. News: {category}")
 
         elif content_type == "calendar":
-            print(
-                f"{index}. Calendar: {item.get('title', 'Calendar')}"
-            )
+            source = item.get("source") or item.get("calendar_source") or "Google"
+            calendar_email = os.getenv("EMAIL_ADDRESS", "Unknown")
+            print(f"{index}. Calendar: {source} ({calendar_email})")
+
         elif content_type == "todo":
-            print(f"{index}. To Do: {item.get('title', 'To Do')}")
+            source = item.get("source", "Notion")
+            print(f"{index}. To Do: {source}")
+
         elif content_type == "summary":
             print(f"{index}. AI Summary: {item.get('title', 'Today at a Glance')}")
 

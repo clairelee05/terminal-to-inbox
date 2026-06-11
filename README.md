@@ -115,7 +115,7 @@ To customize either database:
 Run:
 
 ```bash
-python email_tool.py content
+terminal-to-inbox content
 ```
 
 Expected output:
@@ -146,7 +146,7 @@ Content appears in the email in the same order shown by the `content` command.
 ### View Current Content
 
 ```bash
-python email_tool.py content
+terminal-to-inbox content
 ```
 
 Displays the content currently configured for the email, including the order in which sections will appear.
@@ -166,13 +166,13 @@ Email content:
 ### Remove Content
 
 ```bash
-python email_tool.py delete-content <number>
+terminal-to-inbox delete-content <number>
 ```
 
 Example:
 
 ```bash
-python email_tool.py delete-content 3
+terminal-to-inbox delete-content 3
 ```
 
 Removes the specified content section from the email configuration.
@@ -182,7 +182,7 @@ The content number corresponds to the order shown by the `content` command.
 ### Send Email
 
 ```bash
-python email_tool.py send
+terminal-to-inbox send
 ```
 
 Generates and sends the email digest to the configured recipient.
@@ -190,7 +190,7 @@ Generates and sends the email digest to the configured recipient.
 ### Add Google Calendar
 
 ```bash
-python email_tool.py add-calendar
+terminal-to-inbox add-calendar
 ```
 
 Adds upcoming events from your Google Calendar.
@@ -198,7 +198,7 @@ Adds upcoming events from your Google Calendar.
 ### Add Due Dates
 
 ```bash
-python email_tool.py add-duedate
+terminal-to-inbox add-duedate
 ```
 
 Adds upcoming due dates from a Notion database.
@@ -209,12 +209,12 @@ Example Notion database:
 https://app.notion.com/p/378f0bed024b806cb0cdcea902abf825?v=ec9f0bed024b83db96fe88de353c39fd
 ```
 
-*See `Setting Up Notion` section above to duplicate and customize the Notion page.*
+See the **Setting Up Notion** section above to duplicate and customize the Notion page.
 
 ### Add To-Do List
 
 ```bash
-python email_tool.py add-todo
+terminal-to-inbox add-todo
 ```
 
 Adds today's tasks from a Notion to-do database.
@@ -225,12 +225,12 @@ Example Notion database:
 https://app.notion.com/p/To-do-List-ex-e62f0bed024b836295c101c4532e1bc3
 ```
 
-*See `Setting Up Notion` section above to duplicate and customize the Notion page.*
+See the **Setting Up Notion** section above to duplicate and customize the Notion page.
 
 ### Add News
 
 ```bash
-python email_tool.py add-news
+terminal-to-inbox add-news
 ```
 
 Adds today's top headlines.
@@ -250,13 +250,13 @@ Supported categories:
 Use the configured/default location:
 
 ```bash
-python email_tool.py add-weather
+terminal-to-inbox add-weather
 ```
 
 Or specify a location using coordinates:
 
 ```bash
-python email_tool.py add-weather --lat 32.8595 --lon -117.2124 --name "San Diego, California"
+terminal-to-inbox add-weather --lat 32.8595 --lon -117.2124 --name "San Diego, California"
 ```
 
 Adds weather information including:
@@ -269,7 +269,7 @@ Adds weather information including:
 ### Add AI Summary
 
 ```bash
-python email_tool.py add-summary
+terminal-to-inbox add-summary
 ```
 
 Adds an AI-generated summary at the top of the email.
@@ -289,18 +289,17 @@ Supported AI providers:
 
 > **Note:** If the AI Summary is enabled, it will always appear at the top of the email, regardless of when it was added to the configured content list.
 
-
 ## Example Workflow
 
 ```bash
-python email_tool.py add-calendar
-python email_tool.py add-todo
-python email_tool.py add-duedate
-python email_tool.py add-weather
-python email_tool.py add-summary
+terminal-to-inbox add-calendar
+terminal-to-inbox add-todo
+terminal-to-inbox add-duedate
+terminal-to-inbox add-weather
+terminal-to-inbox add-summary
 
-python email_tool.py content
-python email_tool.py send
+terminal-to-inbox content
+terminal-to-inbox send
 ```
 
 This configuration creates an email containing:
